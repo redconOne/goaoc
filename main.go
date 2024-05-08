@@ -1,13 +1,17 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"os"
+	"strconv"
 
 	"github.com/charmbracelet/huh"
 	"github.com/joho/godotenv"
 )
 
+// TODO: Make years input more robust, EG allow only actually available years
 func main() {
 	sessionCookie := ""
 	if err := godotenv.Load(); err != nil {
@@ -30,14 +34,48 @@ func main() {
 		sessionCookie = os.Getenv("SESSION_COOKIE")
 	}
 
-	day := 1
+	dayStr := "1"
 	year := 2015
+	years := []int{}
 
-	dirName, err := GetInput(year, day, sessionCookie, "https://adventofcode.com/")
-	if err != nil {
-		fmt.Printf("error creating input: %s", err)
-		return
+	for i := 0; i < 8; i++ {
+		years = append(years, 2015+i)
 	}
 
-	fmt.Printf("Successfully created input file at %s/input.txt\n", dirName)
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[int]().
+				Options(huh.NewOptions(years...)...).
+				Title("Year").
+				Description("Choose a year of advent of code to participate in.").
+				Value(&year),
+			huh.NewInput().
+				Title("Day").
+				Description("Choose a day of advent of code to participate in between 1-31").
+				Placeholder("1").
+				Validate(func(str string) error {
+					_, err := strconv.Atoi(str)
+					if err != nil {
+						return errors.New("please enter a valid day")
+					}
+					return nil
+				}).
+				Value(&dayStr),
+		),
+	)
+
+	err := form.Run()
+	if err != nil {
+		log.Fatalf("error running form: %s", err)
+	}
+
+	day, err := strconv.Atoi(dayStr)
+	if err != nil {
+		log.Fatalf("error converted day string to day int: %s", err)
+	}
+
+	_, err = GetInput(year, day, sessionCookie, "https://adventofcode.com")
+	if err != nil {
+		log.Fatalf("error creating input: %s", err)
+	}
 }
