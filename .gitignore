@@ -25,3 +25,6 @@ go.work
 
 # AOC Input (this is against rules to post on github)
 input.txt
+
+# Ignore directories named with numbers (Take this out to push code to github)
+[0-9]*/
